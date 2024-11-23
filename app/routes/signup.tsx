@@ -1,23 +1,57 @@
-import React from 'react'
+import React, { useState } from 'react'
 import Layout  from './components/layout'
 import Textfield from './components/textfield'
-import { Link, useActionData } from '@remix-run/react'
+import { data, Link, useActionData } from '@remix-run/react'
 import { ActionFunction, LoaderFunction } from '@remix-run/node'
+import { createUser } from '../../utils/user.server'
+import { authenticator } from '../../utils/auth.server'
+
 
 export const meta:V2_MetaFunction = () =>{
     return [{title:"New Remix App Login"}]
 }
 
 export const loader:LoaderFunction = async ({request}) => {
-    return ""
+    const user = await authenticator.isAuthenticated(request,{
+      successRedirect:"/"
+    })
+
+    return {user}
+
 } 
 
 export const action:ActionFunction = async ({request}) => {
-    return ""
+    const clonedRequest =  request.clone()
+    const form = await clonedRequest.formData()
+
+    const action = form.get("_action");
+    const email = form.get("email");
+    const password = form.get("password");
+    const name = form.get("name");
+
+    console.log({action,email,password,name})
+
+    if(
+      typeof action !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      typeof name !== "string" 
+    ){
+      return data({error:"Invalid Form Data",form:action},{status:400})
+    }
+
+    await createUser({email,password,name})
+    
+    return await authenticator.authenticate("form",request,{
+      successRedirect:"/",
+      failureRedirect:"/signup",
+      context:{formData:form},
+    })
 }
 
-function signup() {
+function Signup() {
     const actionData = useActionData();
+    if(actionData?.error) console.log(actionData?.error)
     const [formData,setFormData] = useState({
         email:actionData?.fields?.email || "",
         password:actionData?.fields?.password || "",
@@ -40,20 +74,20 @@ function signup() {
              htmlFor='name'
              label="Name"
              type='name'
-             value={FormData.name}
+             value={formData.name}
              onChange={e => handleInputChange(e, "name")}
              />
              <Textfield
              htmlFor='email'
              label="Email"
-             value={FormData.email}
+             value={formData.email}
              onChange={e => handleInputChange(e,"email")}
              />
              <Textfield
              htmlFor='password'
              label="Password"
              type='password'
-             value={FormData.password}
+             value={formData.password}
              onChange={e => handleInputChange(e, "password")}
              />
              
@@ -71,4 +105,4 @@ function signup() {
   )
 }
 
-export default signup
+export default Signup
