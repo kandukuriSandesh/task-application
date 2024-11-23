@@ -18,6 +18,7 @@ export const loader:LoaderFunction = async ({request}) => {
 } 
 
 export const action:ActionFunction = async ({request}) => {
+  console.log("Triggered")
     const clonedRequest = request.clone()
     const form  = await clonedRequest.formData()
 

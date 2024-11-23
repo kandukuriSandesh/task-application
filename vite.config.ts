@@ -9,6 +9,11 @@ declare module "@remix-run/node" {
 }
 
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      external: ['bcryptjs'],
+    },
+  },
   plugins: [
     remix({
       future: {
